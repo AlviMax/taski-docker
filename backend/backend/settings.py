@@ -8,8 +8,32 @@ SECRET_KEY = 'django-insecure-j_89af+30&&4qm*8z9_(^zz8p4-ho8z_m6ylm0s$h!-p@on1_^
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '123.123.123.123',]
+ALLOWED_HOSTS = [
+    'localhost',          # Для доступа через http://localhost:8000
+    '127.0.0.1',          # Для доступа через http://127.0.0.1:8000 (твой текущий случай)
+    '158.160.205.161',    # Внешний IP твоего сервера (на будущее)
+    'alvitaski.hopto.org', # Твой домен (на будущее, чтобы сайт работал по красивому адресу)
+    'backend',            # Внутреннее имя сервиса в Docker Compose
+    'gateway',
+    '123.123.123.123',
+]
 
+
+# ИЗМЕНЕНИЕ 1: Говорим Django доверять заголовкам от прокси-сервера (Nginx/Балансировщика)
+USE_X_FORWARDED_HOST = True
+# Это критически важная настройка! Она говорит Django: 
+# "Если в заголовке X-Forwarded-Proto пришло 'https', считай соединение безопасным"
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# ИЗМЕНЕНИЕ 2: Список доверенных источников для CSRF-защиты (обязательно для Django 4.0+)
+# Без этого при попытке ввести логин и пароль ты получишь ошибку 403 Forbidden.
+CSRF_TRUSTED_ORIGINS = [
+    'https://alvitaski.hopto.org',
+    'http://alvitaski.hopto.org',
+    'http://158.160.205.161',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
 
 # Application definition
 
