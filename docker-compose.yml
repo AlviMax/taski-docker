@@ -1,6 +1,8 @@
 # Файл docker-compose.yml
 volumes:
   pg_data:
+  # Новый volume — для статических файлов
+  static:
 
 services:
   db:
@@ -11,21 +13,50 @@ services:
   backend:
     build: ./backend/
     env_file: .env
-    depends_on:
-      - db
+    # Тут подключаем volume к backend
+    volumes:
+      - static:/backend_static
+    # depends_on:
+    #   - db
   frontend:
     env_file: .env
     build: ./frontend/
+
+    volumes:
+      - static:/frontend_static
+
+    command:
+      cp -r /app/build/. /frontend_static/
 # Добавляем новый контейнер: gateway
   gateway:
     # Сбилдить и запустить образ, 
     # описанный в Dockerfile в папке gateway
     build: ./gateway/
+    # А тут подключаем volume со статикой к gateway
+    volumes:
+      - static:/staticfiles
     # Ключ ports устанавливает
     # перенаправление всех запросов с порта 8000 хоста
     # на порт 80 контейнера
     ports:
       - 8000:80
+    
+    # ИЗМЕНЕНИЕ 1: Явно указываем зависимость. 
+    # Docker гарантирует, что backend и frontend начнут запуск ДО gateway.
+    depends_on:
+      - backend
+      - frontend
+    # ИЗМЕНЕНИЕ 2: Стратегия перезапуска. 
+    # Если DNS-резолвер Docker всё же не успел, Nginx упадет и автоматически 
+    # перезапустится через секунду, когда имя 'backend' уже будет в сети.
+    restart: always
+    # ИЗМЕНЕНИЕ 3: Добавляем volume для статики, чтобы директива 
+    # 'alias /staticfiles/' в nginx.conf имела доступ к файлам.
+    # (Предполагается, что фронтенд собирается в папку build)
+    # volumes:
+    #   - ./frontend/build:/staticfiles/frontend:ro
+    #   # Если у тебя есть статика бэкенда, добавь и её, например:
+    #   - ./backend/static:/staticfiles/backend:ro
 
 
 # # Старая версия
