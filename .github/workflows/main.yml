@@ -181,6 +181,9 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
+          # парольная фраза приватного SSH-ключа.
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          
           source: "docker-compose.production.yml"
           target: "taski"
       - name: Executing remote ssh commands to deploy
